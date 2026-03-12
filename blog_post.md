@@ -201,11 +201,11 @@ takes 30+ seconds on slower models.
 
 The single biggest factor in latency is **model size**:
 
-| Model | Params | Inference | Pipeline Total |
-|---|---|---|---|
-| `qwen2.5-coder-0.5b` | 0.5 B | **~4 s** | **~5 s** |
-| `phi-4-mini` | 3.6 B | ~35 s | ~36 s |
-| `qwen2.5-coder-7b` | 7 B | ~45 s | ~46 s |
+| Model | Params | CPU Size | Inference | Pipeline Total |
+|---|---|---|---|---|
+| `qwen2.5-coder-0.5b` | 0.5 B | 800 MB | **~4 s** | **~5 s** |
+| `phi-4-mini` | 3.6 B | 4.80 GB | ~35 s | ~36 s |
+| `qwen2.5-coder-7b` | 7 B | 6.16 GB | ~45 s | ~46 s |
 
 For interactive robot control, `qwen2.5-coder-0.5b` is the clear
 winner. The 0.5B model produces valid JSON action plans reliably enough

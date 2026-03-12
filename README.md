@@ -435,11 +435,15 @@ The SDK auto-selects the best hardware variant (CUDA GPU → QNN NPU → CPU).
 
 Speed depends on model size and your hardware (GPU vs CPU):
 
-| Model | Size | Inference | Best For |
+| Model | CPU Size | Inference | Best For |
 |---|---|---|---|
-| `qwen2.5-coder-0.5b` | 528 MB | ~4 s | Fast interactive use – recommended |
-| `phi-4-mini` | 3.6 GB | ~35 s | Better accuracy, slower |
-| `qwen2.5-coder-7b` | 4.7 GB | ~45 s | Best JSON accuracy, slowest |
+| `qwen2.5-coder-0.5b` | 800 MB | ~4 s | Fast interactive use – recommended |
+| `phi-4-mini` | 4.80 GB | ~35 s | Better accuracy, slower |
+| `qwen2.5-coder-7b` | 6.16 GB | ~45 s | Best JSON accuracy, slowest |
+
+> **Note:** Sizes shown are for CPU model variants. GPU (CUDA) variants are
+> smaller: 528 MB, 3.6 GB, and 4.7 GB respectively. The SDK auto-selects
+> the best hardware backend for your system.
 
 > **Tip:** For the fastest experience, use `qwen2.5-coder-0.5b`.  You can
 > switch models at any time via the dropdown in the web UI without restarting.
