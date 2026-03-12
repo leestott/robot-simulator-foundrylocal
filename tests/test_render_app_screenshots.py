@@ -116,7 +116,7 @@ def main():
         physicsClientId=cid,
     )
 
-    cube_pos = [0.5, 0.0, 0.34]
+    cube_pos = [0.5, 0.0, 0.3385]
     half = 0.025
     col = p.createCollisionShape(p.GEOM_BOX, halfExtents=[half] * 3, physicsClientId=cid)
     vis = p.createVisualShape(p.GEOM_BOX, halfExtents=[half] * 3,
@@ -148,7 +148,7 @@ def main():
     frame = add_command_overlay(
         frame,
         "describe the scene",
-        "→ [planner] plan (1 action): describe_scene({})    ✓ cube_1: pos=[0.5, 0.0, 0.34]",
+        "→ [planner] plan (1 action): describe_scene({})    ✓ cube_1: pos=[0.5, 0.0, 0.3385]",
     )
     Image.fromarray(frame).save(os.path.join(SCREENSHOTS_DIR, "app_describe.png"))
     print("  saved: app_describe.png")

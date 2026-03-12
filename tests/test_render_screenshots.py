@@ -81,8 +81,8 @@ def main():
         physicsClientId=cid,
     )
 
-    # Spawn a cube on the scaled table surface (~z=0.3125)
-    cube_pos = [0.5, 0.0, 0.34]
+    # Spawn a cube on the scaled table surface (~z=0.3135)
+    cube_pos = [0.5, 0.0, 0.3385]
     half = 0.025
     col = p.createCollisionShape(p.GEOM_BOX, halfExtents=[half]*3, physicsClientId=cid)
     vis = p.createVisualShape(p.GEOM_BOX, halfExtents=[half]*3,
@@ -139,7 +139,7 @@ def main():
     # 4. Close-up of gripper near cube – interaction detail
     save_pybullet_image(cid, "04_gripper_detail.png",
                         cam_distance=0.35, cam_yaw=25, cam_pitch=-15,
-                        cam_target=[0.4, 0.0, 0.34])
+                        cam_target=[0.4, 0.0, 0.3385])
 
     # 5. Front view showing arm extent to table
     _set_pose(robot_id, reaching, cid)

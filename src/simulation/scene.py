@@ -64,7 +64,7 @@ class Scene:
             rgbaColor=[0.2, 0.6, 1.0, 1.0],
             physicsClientId=self._cid,
         )
-        pos = [0.5, 0.0, 0.34]
+        pos = [0.5, 0.0, 0.3385]
         body = p.createMultiBody(
             baseMass=0.1,
             baseCollisionShapeIndex=col_id,
@@ -80,7 +80,7 @@ class Scene:
     def _load_custom_object(self, path: str) -> None:
         """Load a mesh (OBJ/STL) or URDF from *path*."""
         ext = os.path.splitext(path)[1].lower()
-        pos = [0.5, 0.0, 0.34]
+        pos = [0.5, 0.0, 0.3385]
 
         if ext == ".urdf":
             body = p.loadURDF(path, basePosition=pos, physicsClientId=self._cid)
