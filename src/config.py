@@ -62,7 +62,7 @@ def parse_args() -> Config:
     )
     p.add_argument(
         "--model",
-        default=os.getenv("FOUNDRY_MODEL", "qwen2.5-coder-7b"),
+        default=os.getenv("FOUNDRY_MODEL", "qwen2.5-coder-0.5b"),
         help="Foundry Local model alias for the chat brain",
     )
     p.add_argument(
