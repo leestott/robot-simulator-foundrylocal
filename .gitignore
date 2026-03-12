@@ -1,0 +1,33 @@
+# ── Python ────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ── Testing / CI ──────────────────────────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── IDE / Editor ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Playwright MCP (generated during UI testing) ─────────────────
+.playwright-mcp/
+
+# ── OS ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Audio temp files ──────────────────────────────────────────────
+*.wav
+
+# ── Temp test scripts ────────────────────────────────────────────
+test_whisper.py

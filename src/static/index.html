@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot Simulator – Foundry Local</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>Robot Arm Simulator</h1>
+    <span class="subtitle">Powered by Foundry Local &amp; Microsoft Agent Framework</span>
+    <div id="model-selector">
+      <label for="model-select">Model:</label>
+      <select id="model-select" disabled>
+        <option value="">Loading models&hellip;</option>
+      </select>
+      <div id="model-status" class="hidden"></div>
+    </div>
+    <div id="model-download" class="hidden">
+      <div id="download-label">Downloading model&hellip;</div>
+      <div id="download-bar-track">
+        <div id="download-bar-fill"></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Camera view -->
+    <section id="camera-panel">
+      <h2>Live Camera</h2>
+      <div id="camera-container">
+        <img id="camera-img" alt="Robot camera view" />
+        <div id="camera-overlay">Connecting&hellip;</div>
+      </div>
+      <div id="camera-controls">
+        <button id="btn-refresh-camera" title="Refresh camera">&#x21bb; Refresh</button>
+        <label>
+          <input type="checkbox" id="chk-auto-refresh" checked />
+          Auto-refresh
+        </label>
+      </div>
+    </section>
+
+    <!-- Chat / command panel -->
+    <section id="chat-panel">
+      <h2>Commands</h2>
+      <div id="chat-log"></div>
+      <form id="cmd-form">
+        <input
+          type="text"
+          id="cmd-input"
+          placeholder="e.g. pick up the cube"
+          autocomplete="off"
+        />
+        <button type="button" id="btn-mic" class="hidden" title="Hold to record voice command">&#x1F3A4;</button>
+        <button type="submit" id="btn-send">Send</button>
+      </form>
+    </section>
+
+    <!-- Agent status panel -->
+    <section id="agent-panel">
+      <h2>Agent Pipeline</h2>
+      <div id="agent-status">
+        <div class="agent-card" data-agent="PlannerAgent">
+          <span class="agent-indicator"></span>
+          <span class="agent-name">Planner</span>
+          <span class="agent-detail"></span>
+        </div>
+        <div class="agent-arrow">&darr;</div>
+        <div class="agent-card" data-agent="SafetyAgent">
+          <span class="agent-indicator"></span>
+          <span class="agent-name">Safety</span>
+          <span class="agent-detail"></span>
+        </div>
+        <div class="agent-arrow">&darr;</div>
+        <div class="agent-card" data-agent="ExecutorAgent">
+          <span class="agent-indicator"></span>
+          <span class="agent-name">Executor</span>
+          <span class="agent-detail"></span>
+        </div>
+        <div class="agent-arrow">&darr;</div>
+        <div class="agent-card" data-agent="NarratorAgent">
+          <span class="agent-indicator"></span>
+          <span class="agent-name">Narrator</span>
+          <span class="agent-detail"></span>
+        </div>
+      </div>
+
+      <div id="exec-log">
+        <h3>Execution Log</h3>
+        <div id="exec-log-content"></div>
+      </div>
+
+      <div id="scene-info">
+        <h3>Scene</h3>
+        <pre id="scene-data">Loading&hellip;</pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

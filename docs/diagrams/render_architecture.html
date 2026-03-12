@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture Diagram</title>
+<style>
+  body { margin: 0; background: #ffffff; }
+  canvas { display: block; }
+</style>
+<script src="https://unpkg.com/roughjs@4.6.6/bundled/rough.js"></script>
+</head>
+<body>
+<canvas id="c" width="890" height="470"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const rc = rough.canvas(canvas);
+const ctx = canvas.getContext('2d');
+
+// Excalidraw-style hand-drawn font
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+
+function box(x, y, w, h, fill, stroke, label1, label2) {
+  rc.rectangle(x, y, w, h, {
+    fill: fill,
+    fillStyle: 'solid',
+    stroke: stroke,
+    strokeWidth: 2.5,
+    roughness: 1.2,
+    seed: Math.floor(Math.random() * 10000)
+  });
+  ctx.fillStyle = '#1e1e1e';
+  ctx.font = 'bold 19px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(label1, x + w / 2, y + h / 2 - (label2 ? 12 : 0));
+  if (label2) {
+    ctx.font = '15px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = '#495057';
+    ctx.fillText(label2, x + w / 2, y + h / 2 + 14);
+  }
+}
+
+function arrow(x1, y1, x2, y2, label, color) {
+  const c = color || '#495057';
+  rc.line(x1, y1, x2, y2, {
+    stroke: c,
+    strokeWidth: 2.5,
+    roughness: 0.8
+  });
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headLen = 14;
+  const a1 = angle - Math.PI / 6;
+  const a2 = angle + Math.PI / 6;
+  rc.line(x2, y2, x2 - headLen * Math.cos(a1), y2 - headLen * Math.sin(a1), {
+    stroke: c, strokeWidth: 2.5, roughness: 0.5
+  });
+  rc.line(x2, y2, x2 - headLen * Math.cos(a2), y2 - headLen * Math.sin(a2), {
+    stroke: c, strokeWidth: 2.5, roughness: 0.5
+  });
+  if (label) {
+    const mx = (x1 + x2) / 2;
+    const my = (y1 + y2) / 2;
+    ctx.fillStyle = '#495057';
+    ctx.font = 'bold italic 13px "Segoe UI", system-ui, sans-serif';
+    if (Math.abs(x2 - x1) > Math.abs(y2 - y1)) {
+      ctx.fillText(label, mx, my - 12);
+    } else {
+      ctx.fillText(label, mx + 60, my);
+    }
+  }
+}
+
+function biArrow(x1, y1, x2, y2, label, color) {
+  const c = color || '#495057';
+  rc.line(x1, y1, x2, y2, {
+    stroke: c,
+    strokeWidth: 2.5,
+    roughness: 0.8
+  });
+  const angle1 = Math.atan2(y2 - y1, x2 - x1);
+  const angle2 = Math.atan2(y1 - y2, x1 - x2);
+  const headLen = 14;
+  rc.line(x2, y2, x2 - headLen * Math.cos(angle1 - Math.PI / 6), y2 - headLen * Math.sin(angle1 - Math.PI / 6), { stroke: c, strokeWidth: 2.5, roughness: 0.5 });
+  rc.line(x2, y2, x2 - headLen * Math.cos(angle1 + Math.PI / 6), y2 - headLen * Math.sin(angle1 + Math.PI / 6), { stroke: c, strokeWidth: 2.5, roughness: 0.5 });
+  rc.line(x1, y1, x1 - headLen * Math.cos(angle2 - Math.PI / 6), y1 - headLen * Math.sin(angle2 - Math.PI / 6), { stroke: c, strokeWidth: 2.5, roughness: 0.5 });
+  rc.line(x1, y1, x1 - headLen * Math.cos(angle2 + Math.PI / 6), y1 - headLen * Math.sin(angle2 + Math.PI / 6), { stroke: c, strokeWidth: 2.5, roughness: 0.5 });
+  if (label) {
+    ctx.fillStyle = '#495057';
+    ctx.font = 'bold italic 13px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(label, (x1 + x2) / 2 + 65, (y1 + y2) / 2);
+  }
+}
+
+// ── Title ──
+ctx.fillStyle = '#1e1e1e';
+ctx.font = 'bold 22px "Segoe UI", system-ui, sans-serif';
+ctx.textAlign = 'left';
+ctx.fillText('Architecture — Robot Arm Simulator', 30, 30);
+ctx.textAlign = 'center';
+
+// ── Boxes (vibrant solid fills) ──
+box(40,  190, 180, 90, '#4dabf7', '#1971c2', 'User Input', '(CLI / Mic)');
+box(330, 40,  220, 80, '#51cf66', '#2b8a3e', 'Foundry Local', '(on-device LLM)');
+box(330, 190, 220, 90, '#ffd43b', '#e67700', 'Planner', '(LLM call)');
+box(330, 370, 220, 80, '#ff8787', '#c92a2a', 'Validator', '(schema check)');
+box(660, 370, 200, 80, '#b197fc', '#6741d9', 'Executor', '(IK + control)');
+box(660, 190, 200, 90, '#66d9e8', '#0c8599', 'PyBullet', 'Simulation');
+
+// ── Arrows (colored to match flow) ──
+arrow(222, 235, 328, 235, 'text / voice', '#1971c2');       // User → Planner
+biArrow(440, 122, 440, 188, 'OpenAI-compat', '#2b8a3e');   // Foundry ↔ Planner
+arrow(440, 282, 440, 368, 'JSON plan', '#e67700');          // Planner → Validator
+arrow(552, 410, 658, 410, 'validated', '#c92a2a');          // Validator → Executor
+arrow(760, 368, 760, 282, 'IK / control', '#6741d9');      // Executor → PyBullet
+
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Pipeline Diagram</title>
+<style>
+  body { margin: 0; background: #ffffff; }
+  canvas { display: block; }
+</style>
+<script src="https://unpkg.com/roughjs@4.6.6/bundled/rough.js"></script>
+</head>
+<body>
+<canvas id="c" width="920" height="220"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const rc = rough.canvas(canvas);
+const ctx = canvas.getContext('2d');
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+
+function box(x, y, w, h, fill, stroke, label1, label2) {
+  rc.rectangle(x, y, w, h, {
+    fill: fill,
+    fillStyle: 'solid',
+    stroke: stroke,
+    strokeWidth: 2.5,
+    roughness: 1.2,
+    seed: Math.floor(Math.random() * 10000)
+  });
+  ctx.fillStyle = '#1e1e1e';
+  ctx.font = 'bold 18px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(label1, x + w / 2, y + h / 2 - (label2 ? 12 : 0));
+  if (label2) {
+    ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = '#495057';
+    ctx.fillText(label2, x + w / 2, y + h / 2 + 14);
+  }
+}
+
+function arrow(x1, y1, x2, y2, label, color) {
+  const c = color || '#495057';
+  rc.line(x1, y1, x2, y2, { stroke: c, strokeWidth: 2.5, roughness: 0.8 });
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headLen = 13;
+  rc.line(x2, y2, x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6), { stroke: c, strokeWidth: 2.5, roughness: 0.5 });
+  rc.line(x2, y2, x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6), { stroke: c, strokeWidth: 2.5, roughness: 0.5 });
+  if (label) {
+    ctx.fillStyle = '#495057';
+    ctx.font = 'bold italic 13px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2 - 14);
+  }
+}
+
+// ── Title ──
+ctx.fillStyle = '#1e1e1e';
+ctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
+ctx.textAlign = 'left';
+ctx.fillText('Voice Pipeline — Speech to Robot Action', 25, 25);
+ctx.textAlign = 'center';
+
+// ── Boxes (vibrant solid fills) ──
+box(25,  65, 160, 80,  '#4dabf7', '#1971c2', 'Microphone', '(recording)');
+box(255, 65, 180, 80,  '#51cf66', '#2b8a3e', 'Whisper STT', '(Foundry Local)');
+box(505, 65, 175, 80,  '#ffd43b', '#e67700', 'Planner', '(LLM call)');
+box(750, 65, 150, 80,  '#b197fc', '#6741d9', 'Executor →', 'PyBullet');
+
+// ── Arrows (colored) ──
+arrow(187, 105, 253, 105, 'audio', '#1971c2');
+arrow(437, 105, 503, 105, 'text', '#2b8a3e');
+arrow(682, 105, 748, 105, 'actions', '#e67700');
+
+// ── Subtitle ──
+ctx.fillStyle = '#868e96';
+ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+ctx.textAlign = 'left';
+ctx.fillText('All processing runs on-device — no cloud APIs needed', 25, 210);
+</script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot Arm Simulator – Screenshots</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 20px 40px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #58a6ff, #3fb950);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle { color: #8b949e; margin-bottom: 32px; font-size: 1.1rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .card .label {
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      color: #8b949e;
+      border-top: 1px solid #30363d;
+    }
+    .card .label strong { color: #58a6ff; }
+    .info-bar {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .info-item {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 20px;
+    }
+    .info-item .value { font-size: 1.5rem; font-weight: bold; color: #3fb950; }
+    .info-item .key { font-size: 0.85rem; color: #8b949e; margin-top: 2px; }
+    .section-heading { margin-top: 48px; }
+  </style>
+</head>
+<body>
+  <h1>🤖 Robot Arm Simulator with Foundry Local</h1>
+  <p class="subtitle">PyBullet Franka Panda simulation – rendered views at 1920×1080</p>
+
+  <div class="info-bar">
+    <div class="info-item">
+      <div class="value">Franka Panda</div>
+      <div class="key">Robot Arm</div>
+    </div>
+    <div class="info-item">
+      <div class="value">7 DOF</div>
+      <div class="key">Joints</div>
+    </div>
+    <div class="info-item">
+      <div class="value">7 Tools</div>
+      <div class="key">Action Schema</div>
+    </div>
+    <div class="info-item">
+      <div class="value">Foundry Local</div>
+      <div class="key">LLM Brain</div>
+    </div>
+    <div class="info-item">
+      <div class="value">60 / 60</div>
+      <div class="key">Tests Passing</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <img src="screenshots/01_overview.png" alt="Overview">
+      <div class="label"><strong>Overview</strong> – Panda arm in neutral pose beside the table with blue cube</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/02_reaching.png" alt="Reaching toward cube">
+      <div class="label"><strong>Reaching</strong> – Arm extending toward the cube on the table</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/03_above_cube.png" alt="Above cube">
+      <div class="label"><strong>Above Cube</strong> – Gripper open, positioned above the target ready to grasp</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/04_gripper_detail.png" alt="Gripper detail">
+      <div class="label"><strong>Gripper Detail</strong> – Close-up of the gripper fingers approaching the cube</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/05_front_interaction.png" alt="Front interaction view">
+      <div class="label"><strong>Front View</strong> – Head-on view showing arm reach to the table</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/06_side_layout.png" alt="Side layout">
+      <div class="label"><strong>Side View</strong> – Profile showing robot base, arm, table, and cube layout</div>
+    </div>
+  </div>
+
+  <h1 class="section-heading">📐 Architecture</h1>
+  <p class="subtitle">Excalidraw-style diagrams – hand-drawn with roughjs</p>
+
+  <div class="grid">
+    <div class="card">
+      <img src="screenshots/architecture.png" alt="Architecture diagram">
+      <div class="label"><strong>Architecture</strong> – Data flow from user input through the LLM planner, validator, and executor to PyBullet</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/voice_pipeline.png" alt="Voice pipeline diagram">
+      <div class="label"><strong>Voice Pipeline</strong> – Microphone → Whisper STT → Planner → Executor, all on-device</div>
+    </div>
+  </div>
+
+  <h1 class="section-heading">🖥️ App in Action</h1>
+  <p class="subtitle">Live commands processed by the Foundry Local LLM brain (phi-4-mini)</p>
+
+  <div class="grid">
+    <div class="card">
+      <img src="screenshots/app_describe.png" alt="Describe scene command">
+      <div class="label"><strong>Describe Scene</strong> – Natural-language command triggers scene description via LLM planner</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/app_pick.png" alt="Pick cube command">
+      <div class="label"><strong>Pick Cube</strong> – "pick up the cube" parsed into pick({"object": "cube_1"}) action</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/app_move.png" alt="Move end-effector command">
+      <div class="label"><strong>Move End-Effector</strong> – Coordinate-based movement via move_ee({"target_xyz": [0.4, 0.1, 0.3]})</div>
+    </div>
+    <div class="card">
+      <img src="screenshots/app_reset.png" alt="Reset command">
+      <div class="label"><strong>Reset</strong> – Robot returns to neutral pose with reset({}) action</div>
+    </div>
+  </div>
+</body>
+</html>

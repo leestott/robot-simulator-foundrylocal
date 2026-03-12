@@ -1,0 +1,18 @@
+# ── Core ──────────────────────────────────────────────────────────
+pybullet>=3.2.5
+openai>=1.0.0
+numpy>=1.24.0
+
+# ── Foundry Local SDK (endpoint discovery + Whisper model mgmt) ──
+foundry-local-sdk>=0.1.0
+
+# ── Web UI ────────────────────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# ── Voice mode (Option A – Foundry Local Whisper) ────────────────
+sounddevice>=0.4.6
+onnxruntime>=1.15.0
+transformers>=4.30.0
+librosa>=0.10.0
