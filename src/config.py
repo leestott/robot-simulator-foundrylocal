@@ -15,7 +15,7 @@ class Config:
     # ── Foundry Local ────────────────────────────────────────────────
     foundry_base_url: str = ""  # filled at runtime via SDK or env
     foundry_model_alias: str = "qwen2.5-coder-0.5b"
-    whisper_model_alias: str = "whisper-base"
+    whisper_model_alias: str = "whisper-tiny"
     api_key: str = "not-required"
     max_completion_tokens: int = 128
     temperature: float = 0.1
@@ -67,7 +67,7 @@ def parse_args() -> Config:
     )
     p.add_argument(
         "--whisper-model",
-        default=os.getenv("FOUNDRY_WHISPER_MODEL", "whisper-medium"),
+        default=os.getenv("FOUNDRY_WHISPER_MODEL", "whisper-tiny"),
         help="Foundry Local Whisper model alias for voice transcription",
     )
     p.add_argument(

@@ -201,7 +201,7 @@ python -m src.app --web --no-gui
 |---|---|---|
 | `--mode text\|voice` | `text` | Input modality |
 | `--model ALIAS` | `phi-4-mini` | Foundry Local chat model alias |
-| `--whisper-model ALIAS` | `whisper-small` | Whisper model alias for voice |
+| `--whisper-model ALIAS` | `whisper-tiny` | Whisper model alias for voice |
 | `--object PATH` | *(built-in cube)* | OBJ / STL / URDF file for the target object |
 | `--record-seconds N` | `5` | Seconds of audio to record in voice mode |
 | `--web` | off | Start the FastAPI web UI instead of the CLI |
@@ -216,7 +216,7 @@ python -m src.app --web --no-gui
 |---|---|---|
 | `FOUNDRY_LOCAL_BASE_URL` | *(auto-detected via SDK)* | Override the Foundry Local endpoint (e.g. `http://127.0.0.1:5273/v1`) |
 | `FOUNDRY_MODEL` | `qwen2.5-coder-0.5b` | Chat model alias |
-| `FOUNDRY_WHISPER_MODEL` | `whisper-small` | Whisper model alias |
+| `FOUNDRY_WHISPER_MODEL` | `whisper-tiny` | Whisper model alias |
 | `INPUT_MODE` | `text` | Default input mode |
 | `WEB_PORT` | `8080` | Port for the web server |
 
@@ -275,9 +275,10 @@ transcription happens on-device with zero cloud dependencies.
 
    ```bash
    # Download a Whisper model (first time only — pick one):
-   foundry model run whisper-medium       # 1.5 GB – good accuracy (recommended)
-   foundry model run whisper-small        # 542 MB – faster, lighter
-   foundry model run whisper-base         # 194 MB – fastest, less accurate
+   foundry model run whisper-tiny         # 75 MB – fastest (recommended)
+   foundry model run whisper-base         # 194 MB – fast, good accuracy
+   foundry model run whisper-small        # 542 MB – slower, better accuracy
+   foundry model run whisper-medium       # 1.5 GB – slowest, best accuracy
    ```
 
 2. **Browser microphone permission** — the browser will prompt on first use.
@@ -460,7 +461,7 @@ Speed depends on model size and your hardware (GPU vs CPU):
 | PyBullet window doesn't open | Check your display / X11 forwarding; or use `--no-gui` |
 | Voice recording fails | Install PortAudio: `sudo apt install libportaudio2` (Linux) |
 | Whisper ONNX files not found | The SDK downloads them on first use – ensure internet access on first run |
-| Voice transcription is slow (first time) | The Whisper ONNX pipeline is cached after the first request. Consider `whisper-small` for faster inference |
+| Voice transcription is slow (first time) | The Whisper ONNX pipeline is cached after the first request. Consider `whisper-tiny` for fastest inference |
 | LLM returns invalid JSON | The planner retries automatically; try rephrasing the command |
 
 ---

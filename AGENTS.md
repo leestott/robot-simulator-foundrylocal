@@ -233,7 +233,7 @@ For fastest responses, select `qwen2.5-coder-0.5b`.
 | `/api/models` response | < 50 ms | Cached via 30 s TTL; pre-warmed at startup |
 | `/api/camera` JPEG encode | < 30 ms | Pre-computed view/proj matrices, PIL `optimize=False` |
 | Camera refresh in UI | ~4 fps (250 ms) | Non-blocking; skips if previous frame still loading |
-| Whisper transcription | 5–30 s | ONNX pipeline cached after first call; use `whisper-small` for speed |
+| Whisper transcription | 2–30 s | ONNX pipeline cached after first call; use `whisper-tiny` for speed |
 | WebSocket broadcast | < 5 ms | Fire-and-forget; dead clients pruned automatically |
 
 ### Key Performance Patterns
