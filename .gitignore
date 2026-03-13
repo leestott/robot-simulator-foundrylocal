@@ -26,6 +26,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# ── Foundry Local model cache ─────────────────────────────────────
+models/
+
 # ── Audio temp files ──────────────────────────────────────────────
 *.wav
 

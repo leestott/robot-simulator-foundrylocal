@@ -1,23 +1,37 @@
-# Building a Voice-Controlled Robot Simulator with On-Device AI
+# Build a Voice-Controlled Robot Simulator Entirely on Your Machine
 
-*A practical guide for AI engineers and developers using Foundry Local,
-the Microsoft Agent Framework, and PyBullet — no cloud, no API keys.*
+*A hands-on guide to building real-world AI automation with Foundry
+Local, the Microsoft Agent Framework, and PyBullet. No cloud
+subscription, no API keys, no internet required.*
 
 ![Robot Arm Simulator Architecture](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/architecture.png)
 
 ---
 
-## Why This Matters
+## Why Developers Should Care About Offline AI
 
-Most AI demos send every request to a cloud API. That means latency,
-costs, and data leaving your machine. **Foundry Local** changes the
-equation: you get an OpenAI-compatible endpoint running entirely
-on-device. Pair it with a multi-agent framework and a physics simulator,
-and you have a complete voice-to-action pipeline with zero cloud
-dependencies.
+Imagine telling a robot arm to "pick up the red cube" and watching it
+execute the command in a physics simulator, all powered by a language
+model running on your laptop. No API calls leave your machine. No
+token costs accumulate. No internet connection is needed.
 
-This post walks through how we built it — and the patterns you can
-reuse in your own on-device AI applications.
+That is what this project delivers, and every piece of it is open source
+and ready for you to fork, extend, and experiment with.
+
+Most AI demos today lean on cloud endpoints. That works for prototypes,
+but it introduces latency, ongoing costs, and data privacy concerns.
+For robotics and industrial automation, those trade-offs are
+unacceptable. You need inference that runs where the hardware is:
+on the factory floor, in the lab, or on your development machine.
+
+**Foundry Local** gives you an OpenAI-compatible endpoint running
+entirely on-device. Pair it with a multi-agent orchestration framework
+and a physics engine, and you have a complete pipeline that translates
+natural language into validated, safe robot actions.
+
+This post walks through how we built it, why the architecture works,
+and how you can start experimenting with your own offline AI
+simulators today.
 
 ---
 
@@ -30,9 +44,9 @@ The system uses four specialised agents orchestrated by the
   User (text / voice)
         │
         ▼
-  ┌─────────────┐
+  ┌──────────────┐
   │ Orchestrator │
-  └──────┬──────┘
+  └──────┬───────┘
          │
     ┌────┴────┐
     ▼         ▼
@@ -69,7 +83,7 @@ import openai
 # Downloads + loads the model (~16 s first time, ~3 s after)
 manager = FoundryLocalManager("qwen2.5-coder-0.5b")
 
-# Standard OpenAI client — zero code changes from cloud
+# Standard OpenAI client: zero code changes from cloud
 client = openai.OpenAI(
     base_url=manager.endpoint,
     api_key=manager.api_key,
@@ -93,7 +107,7 @@ No configuration needed.
 Instead of one monolithic prompt, we split the task across four agents.
 Each has a single responsibility and communicates via a shared context dict.
 
-### PlannerAgent — NL → JSON
+### PlannerAgent: Natural Language to JSON
 
 The planner sends the user's command to the LLM with a **compact 5-line
 system prompt** and strict JSON schema:
@@ -109,30 +123,100 @@ system prompt** and strict JSON schema:
 ```
 
 Key decisions:
-- `max_tokens=128` — robot JSON plans are small
-- `MAX_RETRIES=1` — one correction attempt if the LLM returns bad JSON
-- `stream=True` — faster first-token latency
+- `max_tokens=128`: robot JSON plans are small
+- `MAX_RETRIES=1`: one correction attempt if the LLM returns bad JSON
+- `stream=True`: faster first-token latency
 
-### SafetyAgent — Validation
+### SafetyAgent: Validation
 
 Checks every action against:
-- **Allowed tools** — only 7 tools in the schema
-- **Workspace bounds** — Panda arm reaches ±0.855 m (X/Y), 0–1.19 m (Z)
-- **Required arguments** — e.g. `pick` needs an `object` name
+- **Allowed tools**: only 7 tools in the schema
+- **Workspace bounds**: Panda arm reaches ±0.855 m (X/Y), 0–1.19 m (Z)
+- **Required arguments**: e.g. `pick` needs an `object` name
 
 If validation fails, the executor is skipped and the narrator explains why.
 
-### ExecutorAgent — PyBullet Dispatch
+### ExecutorAgent: PyBullet Dispatch
 
 Maps validated actions to simulation calls:
 - `move_ee` → inverse kinematics + joint interpolation
 - `pick` → approach → descend → close gripper → lift
 - `place` → move to target → open gripper
 
-### NarratorAgent — Fast Feedback
+### NarratorAgent: Fast Feedback
 
 Uses an **instant template** by default (< 1 ms) instead of a second
 LLM call. Set `USE_LLM_NARRATOR=1` to opt into richer narration.
+
+---
+
+## How the LLM Drives the Simulator
+
+Understanding the interaction between the language model and the physics
+simulator is central to the project. The two never communicate directly.
+Instead, a structured JSON contract forms the bridge between natural
+language and physical motion.
+
+### From Words to JSON
+
+When a user says "pick up the cube", the PlannerAgent sends the command
+to the Foundry Local LLM alongside a compact system prompt. The prompt
+lists every permitted tool and shows the expected JSON format. The LLM
+responds with a structured plan:
+
+```json
+{
+  "type": "plan",
+  "actions": [
+    {"tool": "describe_scene", "args": {}},
+    {"tool": "pick", "args": {"object": "cube_1"}}
+  ]
+}
+```
+
+The planner parses this response, validates it against the action schema,
+and retries once if the JSON is malformed. This constrained output format
+is what makes small models (0.5B parameters) viable: the response space
+is narrow enough that even a compact model can produce correct JSON
+reliably.
+
+### From JSON to Motion
+
+Once the SafetyAgent approves the plan, the ExecutorAgent maps each
+action to concrete PyBullet calls:
+
+1. **`move_ee(target_xyz)`**: The target position in Cartesian
+   coordinates is passed to PyBullet's inverse kinematics solver, which
+   computes the seven joint angles needed to place the end-effector at
+   that position. The robot then interpolates smoothly from its current
+   joint state to the target, stepping the physics simulation at each
+   increment.
+
+2. **`pick(object)`**: This triggers a multi-step grasp sequence. The
+   controller looks up the object's position in the scene, moves the
+   end-effector above the object, descends to grasp height, closes the
+   gripper fingers with a configurable force, and lifts. At every step,
+   PyBullet resolves contact forces and friction so that the object
+   behaves realistically.
+
+3. **`place(target_xyz)`**: The reverse of a pick. The robot carries the
+   grasped object to the target coordinates and opens the gripper,
+   allowing the physics engine to drop the object naturally.
+
+4. **`describe_scene()`**: Rather than moving the robot, this action
+   queries the simulation state and returns the position, orientation,
+   and name of every object on the table, along with the current
+   end-effector pose.
+
+### The Abstraction Boundary
+
+The critical design choice is that the LLM knows nothing about joint
+angles, inverse kinematics, or physics. It operates purely at the level
+of high-level tool calls (`pick`, `move_ee`). The `ActionExecutor`
+translates those tool calls into the low-level API that PyBullet
+provides. This separation means the LLM prompt stays simple, the safety
+layer can validate plans without understanding kinematics, and the
+executor can be swapped out without retraining or re-prompting the model.
 
 ---
 
@@ -181,9 +265,9 @@ The mic button only appears when a Whisper model is cached/loaded.
 
 ## Real-Time Web UI
 
-| Live Camera | Commands | Agent Pipeline |
-|---|---|---|
-| ![App Pick](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/app_pick.png) | ![App Describe](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/app_describe.png) | ![App Move](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/app_move.png) |
+| Pick Command | Describe Command | Move Command | Reset Command |
+|---|---|---|---|
+| ![App Pick](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/app_pick.png) | ![App Describe](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/app_describe.png) | ![App Move](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/app_move.png) | ![App Reset](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/app_reset.png) |
 
 The web UI uses a **fire-and-forget** pattern:
 
@@ -192,8 +276,22 @@ The web UI uses a **fire-and-forget** pattern:
 3. Each agent step broadcasts via WebSocket
 4. `command_done` message delivers final results
 
-This eliminates browser fetch timeouts — even when LLM inference
+This eliminates browser fetch timeouts, even when LLM inference
 takes 30+ seconds on slower models.
+
+---
+
+## The Simulator in Action
+
+Here is the Panda robot arm performing a pick-and-place sequence in PyBullet. Each frame is rendered by the simulator's built-in camera and streamed to the web UI in real time.
+
+| Overview | Reaching | Above the Cube |
+|---|---|---|
+| ![Overview](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/01_overview.png) | ![Reaching](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/02_reaching.png) | ![Above Cube](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/03_above_cube.png) |
+
+| Gripper Detail | Front Interaction | Side Layout |
+|---|---|---|
+| ![Gripper Detail](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/04_gripper_detail.png) | ![Front Interaction](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/05_front_interaction.png) | ![Side Layout](https://raw.githubusercontent.com/leestott/robot-simulator-foundrylocal/main/docs/screenshots/06_side_layout.png) |
 
 ---
 
@@ -213,54 +311,86 @@ for the constrained 7-tool schema.
 
 ### Other Performance Patterns
 
-- **Narrator fast-path** — template instead of LLM (saves ~35 s)
-- **Whisper pipeline caching** — ONNX sessions loaded once, reused
-- **TTL catalog cache** — 30 s cache on model listings
-- **Pre-warm at startup** — catalog + Whisper loaded before first request
-- **Camera deduplication** — skips frames while previous is in-flight
+- **Narrator fast-path**: template instead of LLM (saves ~35 s)
+- **Whisper pipeline caching**: ONNX sessions loaded once, reused
+- **TTL catalogue cache**: 30 s cache on model listings
+- **Pre-warm at startup**: catalogue and Whisper loaded before first request
+- **Camera deduplication**: skips frames whilst the previous is in-flight
 
 ---
 
-## Getting Started
+## Get Running in Five Minutes
+
+You do not need a GPU, a cloud account, or any prior robotics
+experience. The entire stack runs on a standard development machine.
 
 ```bash
 # 1. Install Foundry Local
 winget install Microsoft.FoundryLocal    # Windows
 brew install foundrylocal                # macOS
 
-# 2. Download models
+# 2. Download models (one-time, cached locally)
 foundry model run qwen2.5-coder-0.5b    # Chat brain (~4 s inference)
 foundry model run whisper-base           # Voice input (194 MB)
 
-# 3. Clone & setup
+# 3. Clone and set up the project
 git clone https://github.com/leestott/robot-simulator-foundrylocal
 cd robot-simulator-foundrylocal
 .\setup.ps1                              # or ./setup.sh on macOS/Linux
 
-# 4. Run
+# 4. Launch the web UI
 python -m src.app --web --no-gui         # → http://localhost:8080
 ```
 
-Try these commands:
-- **"pick up the cube"** — robot picks up the blue cube
-- **"describe the scene"** — lists all objects and positions
-- **"reset"** — returns to neutral pose
+Once the server starts, open your browser and try these commands in the
+chat box:
+
+- **"pick up the cube"**: the robot grasps the blue cube and lifts it
+- **"describe the scene"**: returns every object's name and position
+- **"move to 0.3 0.2 0.5"**: sends the end-effector to specific
+  coordinates
+- **"reset"**: returns the arm to its neutral pose
+
+If you have a microphone connected, hold the mic button and speak your
+command instead of typing. Voice input uses a local Whisper model, so
+your audio never leaves the machine.
 
 ---
 
-## Extending It
+## Experiment and Build Your Own
+
+The project is deliberately simple so that you can modify it quickly.
+Here are some ideas to get started.
 
 ### Add a new robot action
 
-1. Add schema to `TOOL_SCHEMAS` in `src/brain/action_schema.py`
-2. Add handler `_do_<tool>` in `src/executor/action_executor.py`
-3. Register in `ActionExecutor._dispatch`
-4. Add a test
+The robot currently understands seven tools. Adding an eighth takes
+four steps:
+
+1. Define the schema in `TOOL_SCHEMAS` (`src/brain/action_schema.py`).
+2. Write a `_do_<tool>` handler in `src/executor/action_executor.py`.
+3. Register it in `ActionExecutor._dispatch`.
+4. Add a test in `tests/test_executor.py`.
+
+For example, you could add a `rotate_ee` tool that spins the
+end-effector to a given roll/pitch/yaw without changing position.
 
 ### Add a new agent
 
-1. Create `src/agents/my_agent.py` with `async run(context)`
-2. Register in `src/agents/orchestrator.py`
+Every agent follows the same pattern: an `async run(context)` method
+that reads from and writes to a shared dictionary. Create a new file
+in `src/agents/`, register it in `orchestrator.py`, and the pipeline
+will call it in sequence.
+
+Ideas for new agents:
+
+- **VisionAgent**: analyse a camera frame to detect objects and update
+  the scene state before planning.
+- **CostEstimatorAgent**: predict how many simulation steps an action
+  plan will take and warn the user if it is expensive.
+- **ExplanationAgent**: generate a step-by-step natural language
+  walkthrough of the plan before execution, allowing the user to
+  approve or reject it.
 
 ### Swap the LLM
 
@@ -268,27 +398,160 @@ Try these commands:
 python -m src.app --web --model phi-4-mini
 ```
 
-Or use the model dropdown in the web UI — no restart needed.
+Or use the model dropdown in the web UI; no restart is needed. Try
+different models and compare accuracy against inference speed. Smaller
+models are faster but may produce malformed JSON more often. Larger
+models are more accurate but slower. The retry logic in the planner
+compensates for occasional failures, so even a small model works well
+in practice.
+
+### Swap the simulator
+
+PyBullet is one option, but the architecture does not depend on it.
+You could replace the simulation layer with:
+
+- **MuJoCo**: a high-fidelity physics engine popular in reinforcement
+  learning research.
+- **Isaac Sim**: NVIDIA's GPU-accelerated robotics simulator with
+  photorealistic rendering.
+- **Gazebo**: the standard ROS simulator, useful if you plan to move
+  to real hardware through ROS 2.
+
+The only requirement is that your replacement implements the same
+interface as `PandaRobot` and `GraspController`.
+
+### Build something completely different
+
+The pattern at the heart of this project (LLM produces structured
+JSON, safety layer validates, executor dispatches to a domain-specific
+engine) is not limited to robotics. You could apply the same
+architecture to:
+
+- **Home automation**: "turn off the kitchen lights and set the
+  thermostat to 19 degrees" translated into MQTT or Zigbee commands.
+- **Game AI**: natural language control of characters in a game engine,
+  with the safety agent preventing invalid moves.
+- **CAD automation**: voice-driven 3D modelling where the LLM
+  generates geometry commands for OpenSCAD or FreeCAD.
+- **Lab instrumentation**: controlling scientific equipment (pumps,
+  stages, spectrometers) via natural language, with the safety agent
+  enforcing hardware limits.
 
 ---
 
-## Key Takeaways
+## From Simulator to Real Robot
 
-1. **On-device AI is production-ready.** Foundry Local serves models via
-   a standard OpenAI API. Swap `base_url` and you're done.
+One of the most common questions about projects like this is whether
+it could control a real robot. The answer is yes, and the architecture
+is designed to make that transition straightforward.
 
-2. **Multi-agent beats monolithic.** Four focused agents with JSON schema
-   contracts are more reliable than one prompt trying to do everything.
+### What Stays the Same
 
-3. **Voice is just another input.** Same pipeline for text and speech —
-   the only difference is the Whisper transcription step.
+The entire upper half of the pipeline is hardware-agnostic:
 
-4. **Model size drives latency.** A 0.5B model at ~4 s is 10× faster
-   than a 7B model at ~45 s. For constrained schemas, smaller models
-   produce valid output reliably.
+- **The LLM planner** generates the same JSON action plans regardless of
+  whether the target is simulated or physical. It has no knowledge of
+  the underlying hardware.
+- **The safety agent** validates workspace bounds and tool schemas. For a
+  real robot, you would tighten the bounds to match the physical
+  workspace and add checks for obstacle clearance using sensor data.
+- **The orchestrator** coordinates agents in the same sequence. No
+  changes are needed.
+- **The narrator** reports what happened. It works with any result data
+  the executor returns.
 
-5. **Async-first for real-time.** `asyncio.create_task` + WebSocket
-   keeps the UI responsive during inference.
+### What Changes
+
+The only component that must be replaced is the **executor layer**,
+specifically the `PandaRobot` class and the `GraspController`. In
+simulation, these call PyBullet's inverse kinematics solver and step the
+physics engine. On a real robot, they would instead call the hardware
+driver.
+
+For a Franka Emika Panda (the same robot modelled in the simulation),
+the replacement options include:
+
+- **libfranka**: Franka's C++ real-time control library, which accepts
+  joint position or torque commands at 1 kHz.
+- **ROS 2 with MoveIt**: A robotics middleware stack that provides motion
+  planning, collision avoidance, and hardware abstraction. The `move_ee`
+  action would become a MoveIt goal, and the framework would handle
+  trajectory planning and execution.
+- **Franka ROS 2 driver**: Combines libfranka with ROS 2 for a drop-in
+  replacement of the simulation controller.
+
+The `ActionExecutor._dispatch` method maps tool names to handler
+functions. Replacing `_do_move_ee`, `_do_pick`, and `_do_place` with
+calls to a real robot driver is the only code change required.
+
+### Key Considerations for Real Hardware
+
+- **Safety**: A simulated robot cannot cause physical harm; a real robot
+  can. The safety agent would need to incorporate real-time collision
+  checking against sensor data (point clouds from depth cameras, for
+  example) rather than relying solely on static workspace bounds.
+- **Perception**: In simulation, object positions are known exactly. On a
+  real robot, you would need a perception system (cameras with object
+  detection or fiducial markers) to locate objects before grasping.
+- **Calibration**: The simulated robot's coordinate frame matches the
+  URDF model perfectly. A real robot requires hand-eye calibration to
+  align camera coordinates with the robot's base frame.
+- **Latency**: Real actuators have physical response times. The executor
+  would need to wait for motion completion signals from the hardware
+  rather than stepping a simulation loop.
+- **Gripper feedback**: In PyBullet, grasp success is determined by
+  contact forces. A real gripper would provide force or torque feedback
+  to confirm whether an object has been securely grasped.
+
+### The Simulation as a Development Tool
+
+This is precisely why simulation-first development is valuable. You can
+iterate on the LLM prompts, agent logic, and command pipeline without
+risk to hardware. Once the pipeline reliably produces correct action
+plans in simulation, moving to a real robot is a matter of swapping the
+lowest layer of the stack.
+
+---
+
+## Key Takeaways for Developers
+
+1. **On-device AI is production-ready.** Foundry Local serves models
+   through a standard OpenAI-compatible API. If your code already uses
+   the OpenAI SDK, switching to local inference is a one-line change to
+   `base_url`.
+
+2. **Small models are surprisingly capable.** A 0.5B parameter model
+   produces valid JSON action plans in under 5 seconds. For constrained
+   output schemas, you do not need a 70B model.
+
+3. **Multi-agent pipelines are more reliable than monolithic prompts.**
+   Splitting planning, validation, execution, and narration across four
+   agents makes each one simpler to test, debug, and replace.
+
+4. **Simulation is the safest way to iterate.** You can refine LLM
+   prompts, agent logic, and tool schemas without risking real hardware.
+   When the pipeline is reliable, swapping the executor for a real robot
+   driver is the only change needed.
+
+5. **The pattern generalises beyond robotics.** Structured JSON output
+   from an LLM, validated by a safety layer, dispatched to a
+   domain-specific engine: that pattern works for home automation,
+   game AI, CAD, lab equipment, and any other domain where you need
+   safe, structured control.
+
+6. **You can start building today.** The entire project runs on a
+   standard laptop with no GPU, no cloud account, and no API keys.
+   Clone the repository, run the setup script, and you will have a
+   working voice-controlled robot simulator in under five minutes.
+
+---
+
+**Ready to start building?**
+[Clone the repository](https://github.com/leestott/robot-simulator-foundrylocal),
+try the commands, and then start experimenting. Fork it, add your own
+agents, swap in a different simulator, or apply the pattern to an
+entirely different domain. The best way to learn how local AI can solve
+real-world problems is to build something yourself.
 
 ---
 
